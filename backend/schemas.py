@@ -13,7 +13,7 @@ class CustomerOut(CustomerCreate):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class OrderCreate(BaseModel):
     customer_id: UUID
@@ -28,4 +28,5 @@ class OrderOut(OrderCreate):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+

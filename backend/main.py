@@ -7,6 +7,15 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+import socket
+
+try:
+    socket.create_connection(("db.ubkxpatthddyoceeafdy.supabase.co", 5432), timeout=5)
+    print("✅ Render puede conectarse a Supabase")
+except Exception as e:
+    print("❌ Render no puede conectarse a Supabase:", e)
+
+
 # Dependency
 def get_db():
     db = SessionLocal()

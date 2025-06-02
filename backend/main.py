@@ -9,6 +9,8 @@ from typing import Optional
 from sqlalchemy import String
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+import os
+
 
 
 
@@ -19,13 +21,20 @@ load_dotenv()
 app = FastAPI()
 
 
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    os.getenv("ORIGIN"), 
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or set specific origins
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 # Create database tables
@@ -43,6 +52,7 @@ def get_db():
 
 @app.post("/customers", response_model=schemas.CustomerOut)
 def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db)):
+    print(f"Received customer: {customer}")
     db_customer = models.Customer(**customer.dict())
     db.add(db_customer)
     db.commit()

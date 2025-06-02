@@ -10,7 +10,6 @@ class CustomerCreate(BaseModel):
 
 class CustomerOut(CustomerCreate):
     id: UUID
-    created_at: datetime
 
     class Config:
         from_attributes = True

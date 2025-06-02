@@ -12,6 +12,8 @@ HOST = os.getenv("HOST")
 PORT = os.getenv("PORT")
 DBNAME = os.getenv("DBNAME")
 
+print(USER, PASSWORD, HOST, PORT, DBNAME)
+
 # Validate environment variables
 if not all([USER, PASSWORD, HOST, PORT, DBNAME]):
     raise ValueError("❌ Missing one or more database environment variables")

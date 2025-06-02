@@ -16,11 +16,10 @@ class Customer(Base):
 class Order(Base):
     __tablename__ = "orders"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id", ondelete="CASCADE"))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    customer_id = Column(Integer, ForeignKey("customers.id"))
+    quantity = Column(Integer)
     color = Column(String)
     type = Column(String)
-    quantity = Column(Integer)
-    image_url = Column(Text)
-    status = Column(String, default="pending")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    logo = Column(Text, nullable=True)  # base64 or image URL
+

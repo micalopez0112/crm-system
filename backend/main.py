@@ -5,12 +5,28 @@ import models, schemas
 import os
 from dotenv import load_dotenv
 import psycopg2
+from typing import Optional
+from sqlalchemy import String
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+
+
 
 # Load environment variables from .env
 load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or set specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -33,16 +49,31 @@ def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_
     db.refresh(db_customer)
     return db_customer
 
+from typing import Optional
+
 @app.get("/customers", response_model=list[schemas.CustomerOut])
-def list_customers(db: Session = Depends(get_db)):
-    return db.query(models.Customer).all()
+def list_customers(
+    q: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.Customer)
+    if q:
+        query = query.filter(
+            (models.Customer.phone.ilike(f"%{q}%")) |
+            (models.Customer.id.cast(String).ilike(f"%{q}%"))
+        )
+    return query.all()
+
 
 @app.post("/orders", response_model=schemas.OrderOut)
 def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
+    print(f"Received order: {order}")  # Print the received order (order)
     db_order = models.Order(**order.dict())
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
+    db_order.created_at = datetime.now()  # Add this line
+
     return db_order
 
 @app.get("/orders", response_model=list[schemas.OrderOut])

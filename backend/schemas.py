@@ -17,16 +17,16 @@ class CustomerOut(CustomerCreate):
 
 class OrderCreate(BaseModel):
     customer_id: UUID
+    quantity: int
     color: str
     type: str
-    quantity: int
-    image_url: Optional[str]
+    logo: str | None = None  # base64 string
 
 class OrderOut(OrderCreate):
     id: UUID
-    status: str
-    created_at: datetime
-
+    
     class Config:
         from_attributes = True
+
+
 

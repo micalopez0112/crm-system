@@ -5,23 +5,13 @@ import os
 
 load_dotenv()  # Load .env file
 
-# Fetch variables
-USER = os.getenv("USER")
-PASSWORD = os.getenv("PASSWORD")
-HOST = os.getenv("HOST")
-PORT = os.getenv("PORT")
-DBNAME = os.getenv("DBNAME")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-print(USER, PASSWORD, HOST, PORT, DBNAME)
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set in the .env file")
 
-# Validate environment variables
-if not all([USER, PASSWORD, HOST, PORT, DBNAME]):
-    raise ValueError("❌ Missing one or more database environment variables")
-
-# Construct DATABASE_URL
-DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}"
-
-# Create engine and session
+# Create the engine with sslmode=require already in the URL
 engine = create_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

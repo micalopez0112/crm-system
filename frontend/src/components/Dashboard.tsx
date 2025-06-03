@@ -1,5 +1,6 @@
 // src/components/Dashboard.tsx
 import { useEffect, useState } from "react";
+import axios from "../../api/api"; // Import Axios instance
 
 type Customer = {
   id: string;
@@ -22,15 +23,26 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/customers")
-      .then((res) => res.json())
-      .then(setCustomers)
-      .catch((err) => console.error("Failed to load customers:", err));
+    const fetchCustomers = async () => {
+      try {
+        const response = await axios.get("/customers");
+        setCustomers(response.data);
+      } catch (err) {
+        console.error("Failed to load customers:", err);
+      }
+    };
 
-    fetch("http://localhost:8000/orders")
-      .then((res) => res.json())
-      .then(setOrders)
-      .catch((err) => console.error("Failed to load orders:", err));
+    const fetchOrders = async () => {
+      try {
+        const response = await axios.get("/orders");
+        setOrders(response.data);
+      } catch (err) {
+        console.error("Failed to load orders:", err);
+      }
+    };
+
+    fetchCustomers();
+    fetchOrders();
 
     console.log("Dashboard component mounted");
     console.log("Customers:", customers);

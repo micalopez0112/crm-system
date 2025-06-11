@@ -1,0 +1,118 @@
+.container {
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+button {
+  padding: 8px 12px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.error {
+  color: red;
+  margin: 10px 0;
+}
+
+.print-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  margin: 16px 0;
+}
+
+.print-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  /* margin-top: 20px; */
+}
+
+.print-card {
+  width: 100%;
+  border: 1px solid #ccc;
+  padding: 10px;
+  background: #f0f0f0;
+  box-sizing: border-box;
+  font-size: 20px;
+  box-sizing: border-box;
+  page-break-inside: avoid;
+}
+
+.card-info {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.card-info p {
+  text-align: left;
+  margin: 0;
+}
+
+.card-info input {
+  border: 1px solid #ccc;
+  padding: 4px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  input {
+    border: none !important;
+    padding: 0 !important;
+    font: inherit;
+    background: none !important;
+  }
+
+  .card-info input {
+    width: 100%;
+  }
+
+  .print-container,
+  .print-container * {
+    visibility: visible;
+  }
+
+  .print-container {
+    display: grid;
+    grid-template-rows: repeat(4, 1fr);
+    width: 100%;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+  }
+
+  .print-card {
+    border: 1px solid #000;
+    background: #fff;
+    box-shadow: none;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 10px;
+    page-break-inside: avoid;
+    align-items: start;
+  }
+
+  .print-card:nth-child(4n) {
+    page-break-after: always;
+  }
+
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  .hide-printing {
+    display: none;
+  }
+}

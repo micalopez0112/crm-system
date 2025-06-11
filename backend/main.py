@@ -1,18 +1,11 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-import models, schemas
-import os
-from dotenv import load_dotenv
-import psycopg2
-from typing import Optional
-from sqlalchemy import String
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+from fastapi.responses import HTMLResponse
+from typing import Optional
+from dotenv import load_dotenv
 import os
-
-
-
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # Load environment variables from .env
 load_dotenv()
@@ -20,11 +13,9 @@ load_dotenv()
 # Initialize FastAPI app
 app = FastAPI()
 
-
-from fastapi.middleware.cors import CORSMiddleware
-
+# Enable CORS
 origins = [
-    os.getenv("ORIGIN"), 
+    os.getenv("ORIGIN"),
 ]
 
 app.add_middleware(
@@ -35,87 +26,92 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Google Sheets setup
+def get_sheet():
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds_path = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
+    spreadsheet_id = os.getenv("SPREADSHEET_ID")
 
+    if not creds_path or not spreadsheet_id:
+        raise Exception("Missing Google Sheets credentials or spreadsheet ID.")
 
-# Create database tables
-models.Base.metadata.create_all(bind=engine)
-
-# Dependency for database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(spreadsheet_id).sheet1  # Use .worksheet("Sheet1") if needed
+    return sheet
 
 # ----------- Routes -----------
 
-@app.post("/customers", response_model=schemas.CustomerOut)
-def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db)):
-    print(f"Received customer: {customer}")
-    db_customer = models.Customer(**customer.dict())
-    db.add(db_customer)
-    db.commit()
-    db.refresh(db_customer)
-    return db_customer
+@app.get("/customers")
+def list_customers(q: Optional[str] = Query(None)):
+    sheet = get_sheet()
+    records = sheet.get_all_records()  # List of 
+    
+    print(records)
 
-from typing import Optional
-
-@app.get("/customers", response_model=list[schemas.CustomerOut])
-def list_customers(
-    q: Optional[str] = None,
-    db: Session = Depends(get_db)
-):
-    query = db.query(models.Customer)
     if q:
-        query = query.filter(
-            (models.Customer.phone.ilike(f"%{q}%")) |
-            (models.Customer.id.cast(String).ilike(f"%{q}%"))
-        )
-    return query.all()
+        filtered = [
+            r for r in records
+            if q.lower() in str(r.get("Nombre", "")).lower()
+            or q.lower() in str(r.get("Mail", "")).lower()
+            or q.lower() in str(r.get("Telefono", "")).lower()
+        ]
+    else:
+        filtered = records
 
+    # Only return address info for printing
+    result = [
+        {
+            "name": r.get("Nombre"),
+            "phone": r.get("Telefono"),
+            "direction": r.get("Direccion"),
+            "city": r.get("Ciudad"),
+            "department": r.get("Departamento")
+        }
+        for r in filtered
+    ]
+    return result
 
-@app.post("/orders", response_model=schemas.OrderOut)
-def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
-    print(f"Received order: {order}")  # Print the received order (order)
-    db_order = models.Order(**order.dict())
-    db.add(db_order)
-    db.commit()
-    db.refresh(db_order)
-    db_order.created_at = datetime.now()  # Add this line
+@app.get("/print_label", response_class=HTMLResponse)
+def print_label(q: Optional[str] = Query(None)):
+    sheet = get_sheet()
+    records = sheet.get_all_records()
 
-    return db_order
+    # Search for matching customer
+    customer = None
+    for r in records:
+        if q and (
+            q.lower() in str(r.get("Nombre", "")).lower()
+            or q.lower() in str(r.get("Mail", "")).lower()
+            or q.lower() in str(r.get("Telefono", "")).lower()
+        ):
+            customer = r
+            break
 
-@app.get("/orders", response_model=list[schemas.OrderOut])
-def list_orders(db: Session = Depends(get_db)):
-    return db.query(models.Order).all()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
 
-# ----------- Optional DB Connection Test -----------
+    # Render printable HTML
+    html = f"""
+    <html>
+    <head><title>Shipping Label</title></head>
+    <body style="font-family:sans-serif;padding:20px;">
+        <h2>Shipping Label</h2>
+        <p><strong>Name:</strong> {customer.get('Nombre')}</p>
+        <p><strong>Name:</strong> {customer.get('Telefono')}</p>
+        <p><strong>Direction:</strong> {customer.get('Direccion')}</p>
+        <p><strong>City:</strong> {customer.get('Ciudad')}</p>
+        <p><strong>Department:</strong> {customer.get('Departamento')}</p>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html)
 
-if __name__ == "__main__":
-    USER = os.getenv("USER")
-    PASSWORD = os.getenv("PASSWORD")
-    HOST = os.getenv("HOST")
-    PORT = os.getenv("PORT")
-    DBNAME = os.getenv("DBNAME")
+# ----------- Optional Root Route -----------
 
-    try:
-        connection = psycopg2.connect(
-            user=USER,
-            password=PASSWORD,
-            host=HOST,
-            port=PORT,
-            dbname=DBNAME
-        )
-        print("✅ Connection successful!")
-
-        cursor = connection.cursor()
-        cursor.execute("SELECT NOW();")
-        result = cursor.fetchone()
-        print("🕒 Current Time:", result)
-
-        cursor.close()
-        connection.close()
-        print("🔌 Connection closed.")
-    except Exception as e:
-        print(f"❌ Failed to connect: {e}")
+@app.get("/")
+def root():
+    return {"message": "Google Sheets Customer Lookup API"}

@@ -4,6 +4,7 @@ import OrderForm from "../src/components/OrderForm";
 import Dashboard from "../src/components/Dashboard"; // 👈 Import
 
 import "./App.css";
+import CustomerSearch from "./components/CustomerSearch.tsx";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             Create Order
           </Link>
           <Link to="/dashboard">Dashboard</Link>
+          <Link to="/printTag">Imprimir etiqueta</Link>
         </nav>
 
         {/* Page Content */}
@@ -27,6 +29,7 @@ function App() {
           <Route path="/customer" element={<CustomerForm />} />
           <Route path="/order" element={<OrderForm />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/printTag" element={<CustomerSearch />} />
         </Routes>
       </div>
     </Router>

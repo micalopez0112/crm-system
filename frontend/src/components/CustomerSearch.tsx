@@ -11,6 +11,8 @@ interface Customer {
   department: string;
 }
 
+const baseURL = (import.meta as any).env.VITE_API_BASE_URL;
+
 const CustomerSearch: React.FC = () => {
   const [query, setQuery] = useState("");
   const [customerList, setCustomerList] = useState<Customer[]>([]);
@@ -20,7 +22,7 @@ const CustomerSearch: React.FC = () => {
     setError("");
     try {
       const res = await fetch(
-        `http://localhost:8000/customers?q=${encodeURIComponent(query)}`
+        `${baseURL}/customers?q=${encodeURIComponent(query)}`
       );
       const data: Customer[] = await res.json();
       if (data.length === 0) {

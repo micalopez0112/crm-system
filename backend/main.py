@@ -4,6 +4,8 @@ from fastapi.responses import HTMLResponse
 from typing import Optional
 from dotenv import load_dotenv
 import os
+import json
+import base64
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -32,15 +34,19 @@ def get_sheet():
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-    creds_path = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
+    b64_creds = os.getenv("GOOGLE_SHEETS_CREDENTIALS_B64")
+    creds_json = base64.b64decode(b64_creds).decode()
     spreadsheet_id = os.getenv("SPREADSHEET_ID")
 
-    if not creds_path or not spreadsheet_id:
-        raise Exception("Missing Google Sheets credentials or spreadsheet ID.")
+    if not creds_json or not spreadsheet_id:
+        raise Exception("Missing Google Sheets credentials JSON or spreadsheet ID.")
 
-    creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
+    # Parse the JSON string from the environment variable
+    creds_dict = json.loads(creds_json)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
     client = gspread.authorize(creds)
-    sheet = client.open_by_key(spreadsheet_id).sheet1  # Use .worksheet("Sheet1") if needed
+    sheet = client.open_by_key(spreadsheet_id).sheet1
     return sheet
 
 # ----------- Routes -----------

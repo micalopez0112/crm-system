@@ -1,37 +1,95 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import CustomerForm from "../src/components/CustomerForm.tsx";
-import OrderForm from "../src/components/OrderForm";
-import Dashboard from "../src/components/Dashboard"; // 👈 Import
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link as RouterLink,
+} from "react-router-dom";
+import {
+  Box,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemText,
+  AppBar,
+  Toolbar,
+  Typography,
+  CssBaseline,
+} from "@mui/material";
 
-import "./App.css";
-import CustomerSearch from "./components/CustomerSearch.tsx";
+import OrderForm from "../src/components/OrderForm";
+import Dashboard from "../src/components/Dashboard";
+import TagPrint from "./components/LabelsPrint/LabelsPrint.tsx";
+import AddCustomer from "./components/AddCustomer/AddCustomer.tsx";
+
+const drawerWidth = 240;
 
 function App() {
   return (
     <Router>
-      <div className="p-4">
-        <h1>🧾 CRM System</h1>
+      <Box sx={{ display: "flex" }}>
+        <CssBaseline />
 
-        {/* Navigation Menu */}
-        <nav style={{ margin: "1rem 0" }}>
-          <Link to="/customer" style={{ marginRight: 10 }}>
-            Add Customer
-          </Link>
-          <Link to="/order" style={{ marginRight: 10 }}>
-            Create Order
-          </Link>
-          <Link to="/dashboard">Dashboard</Link>
-          <Link to="/printTag">Imprimir etiqueta</Link>
-        </nav>
+        {/* Top AppBar */}
+        <AppBar
+          position="fixed"
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        >
+          <Toolbar>
+            <Typography variant="h6" noWrap component="div">
+              CRM Publiadhesivos
+            </Typography>
+          </Toolbar>
+        </AppBar>
 
-        {/* Page Content */}
-        <Routes>
-          <Route path="/customer" element={<CustomerForm />} />
-          <Route path="/order" element={<OrderForm />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/printTag" element={<CustomerSearch />} />
-        </Routes>
-      </div>
+        {/* Left-side Drawer */}
+        <Drawer
+          variant="permanent"
+          anchor="left"
+          sx={{
+            width: drawerWidth,
+            flexShrink: 0,
+            [`& .MuiDrawer-paper`]: {
+              width: drawerWidth,
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <Toolbar />
+          <Box sx={{ overflow: "auto" }}>
+            <List>
+              <ListItemButton component={RouterLink} to="/customer">
+                <ListItemText primary="Add Customer" />
+              </ListItemButton>
+              <ListItemButton component={RouterLink} to="/order">
+                <ListItemText primary="Create Order" />
+              </ListItemButton>
+              <ListItemButton component={RouterLink} to="/dashboard">
+                <ListItemText primary="Dashboard" />
+              </ListItemButton>
+              <ListItemButton component={RouterLink} to="/printTag">
+                <ListItemText primary="Imprimir etiqueta" />
+              </ListItemButton>
+            </List>
+          </Box>
+        </Drawer>
+
+        {/* Main Content */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+          }}
+        >
+          <Toolbar /> {/* Space for the AppBar */}
+          <Routes>
+            <Route path="/customer" element={<AddCustomer />} />
+            <Route path="/order" element={<OrderForm />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/printTag" element={<TagPrint />} />
+          </Routes>
+        </Box>
+      </Box>
     </Router>
   );
 }

@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import { Customer } from "../../models/Customer";
 import "./PrintableLabel.css";
 

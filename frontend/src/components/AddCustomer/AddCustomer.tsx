@@ -128,6 +128,22 @@ export default function AddCustomer() {
               size={isMobile ? "small" : "medium"}
             />
             <TextField
+              name="razonSocial"
+              label="Razon social"
+              value={formData.razonSocial}
+              onChange={handleChange}
+              fullWidth
+              size={isMobile ? "small" : "medium"}
+            />
+            <TextField
+              name="rut"
+              label="Rut"
+              value={formData.rut}
+              onChange={handleChange}
+              fullWidth
+              size={isMobile ? "small" : "medium"}
+            />
+            <TextField
               name="direccion"
               label="Direccion"
               value={formData.direccion}
@@ -160,23 +176,6 @@ export default function AddCustomer() {
               type="email"
               fullWidth
               size={isMobile ? "small" : "medium"}
-            />
-            <TextField
-              name="rut"
-              label="Rut"
-              value={formData.rut}
-              onChange={handleChange}
-              fullWidth
-              size={isMobile ? "small" : "medium"}
-            />
-            <TextField
-              name="razonSocial"
-              label="Razon social"
-              value={formData.razonSocial}
-              onChange={handleChange}
-              fullWidth
-              size={isMobile ? "small" : "medium"}
-              sx={{ gridColumn: { sm: "span 2" } }}
             />
 
             <Stack

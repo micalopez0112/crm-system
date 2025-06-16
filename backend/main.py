@@ -64,7 +64,7 @@ sheets_fields = {
     "city": "CIUDAD",
     "department": "DEPARTAMENTO",
     "rut": "RUT",
-    "razon_social": "RAZON_SOCIAL"
+    "company": "RAZON SOCIAL"
 }
 
 @app.get("/customers")

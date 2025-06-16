@@ -22,6 +22,7 @@ interface Customer {
   direction: string;
   city: string;
   department: string;
+  company?: string;
 }
 
 const baseURL = (import.meta as any).env.VITE_API_BASE_URL;
@@ -66,7 +67,16 @@ const TagPrint: React.FC = () => {
 
   const handleInputChange = (
     index: number,
-    field: keyof Pick<Customer, "name" | "direction" | "city" | "department">,
+    field: keyof Pick<
+      Customer,
+      | "name"
+      | "direction"
+      | "city"
+      | "department"
+      | "email"
+      | "phone"
+      | "company"
+    >,
     value: string
   ) => {
     const updatedList = [...customerList];
@@ -244,11 +254,29 @@ const TagPrint: React.FC = () => {
                     }
                   />
                   <TextField
+                    label="Empresa"
+                    value={c.company}
+                    fullWidth
+                    onChange={(e) =>
+                      handleInputChange(index, "company", e.target.value)
+                    }
+                    sx={{ mt: 2 }}
+                  />
+                  <TextField
                     label="Dirección"
                     value={c.direction}
                     fullWidth
                     onChange={(e) =>
                       handleInputChange(index, "direction", e.target.value)
+                    }
+                    sx={{ mt: 2 }}
+                  />
+                  <TextField
+                    label="Teléfono"
+                    value={c.phone}
+                    fullWidth
+                    onChange={(e) =>
+                      handleInputChange(index, "phone", e.target.value)
                     }
                     sx={{ mt: 2 }}
                   />

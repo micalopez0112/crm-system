@@ -82,7 +82,6 @@ def list_customers(q: Optional[str] = Query(None)):
     else:
         filtered = records
 
-    # Return all mapped fields using the standardized keys
     result = [
         {key: r.get(sheet_key, "") for key, sheet_key in sheets_fields.items()}
         for r in filtered
@@ -94,22 +93,25 @@ def list_customers(q: Optional[str] = Query(None)):
 def add_customer(customer: Customer):
     sheet = get_sheet()
 
-    new_row = [
-        customer.nombre,
-        customer.telefono,
-        customer.direccion,
-        customer.ciudad,
-        customer.departamento,
-        customer.mail,
-        customer.rut,
-        customer.razon_social,
-    ]
+    all_rows = sheet.get_all_values()
+    next_id = len(all_rows) 
+
+    customer_dict = {
+        "NOMBRE": customer.nombre,
+        "RAZON SOCIAL": customer.razon_social,
+        "RUT": customer.rut,
+        "DIRECCION": customer.direccion,
+        "TELEFONO": customer.telefono,
+        "CIUDAD": customer.ciudad,
+        "DEPARTAMENTO": customer.departamento,
+        "MAIL": customer.mail,
+    }
+
+    headers = all_rows[0]
+    new_row = [next_id] + [customer_dict.get(col, "") for col in headers[1:]]
 
     try:
         sheet.append_row(new_row)
-        return {"message": "Customer added successfully"}
+        return {"message": "Customer added successfully", "id": next_id}
     except Exception as e:
         return {"error": str(e)}
-
-    
-

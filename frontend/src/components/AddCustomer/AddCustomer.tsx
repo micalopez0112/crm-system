@@ -205,7 +205,6 @@ export default function AddCustomer() {
         </Box>
       </Paper>
 
-      {/* Modal para pegar texto */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth>
         <DialogTitle>Pegar datos del cliente</DialogTitle>
         <DialogContent>

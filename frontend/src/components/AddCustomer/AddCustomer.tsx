@@ -24,7 +24,7 @@ export default function AddCustomer() {
     departamento: "",
     mail: "",
     rut: "",
-    razonSocial: "",
+    company: "",
   });
 
   const [openModal, setOpenModal] = useState(false);
@@ -51,7 +51,7 @@ export default function AddCustomer() {
         departamento: "",
         mail: "",
         rut: "",
-        razonSocial: "",
+        company: "",
       });
     } catch (err) {
       alert("Error creating customer");
@@ -128,9 +128,9 @@ export default function AddCustomer() {
               size={isMobile ? "small" : "medium"}
             />
             <TextField
-              name="razonSocial"
+              name="company"
               label="Razon social"
-              value={formData.razonSocial}
+              value={formData.company}
               onChange={handleChange}
               fullWidth
               size={isMobile ? "small" : "medium"}

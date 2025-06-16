@@ -109,9 +109,10 @@ def add_customer(customer: Customer):
     all_rows = sheet.get_all_values()
     next_id = len(all_rows) 
 
+    print(customer)
     customer_dict = {
         "NOMBRE": customer.nombre,
-        "RAZON SOCIAL": customer.razon_social,
+        "RAZON SOCIAL": customer.company,
         "RUT": customer.rut,
         "DIRECCION": customer.direccion,
         "TELEFONO": customer.telefono,

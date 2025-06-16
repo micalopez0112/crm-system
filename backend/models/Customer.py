@@ -9,4 +9,4 @@ class Customer(BaseModel):
     departamento: Optional[str] = ""
     mail: Optional[str] = ""
     rut: Optional[str] = ""
-    razon_social: Optional[str] = ""
+    company: Optional[str] = ""

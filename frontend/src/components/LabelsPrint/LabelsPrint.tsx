@@ -9,6 +9,7 @@ import {
   IconButton,
   Stack,
   Box,
+  Autocomplete,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { PrintableLabel } from "../PrintableLabel/PrintableLabel";
@@ -27,34 +28,35 @@ const baseURL = (import.meta as any).env.VITE_API_BASE_URL;
 
 const TagPrint: React.FC = () => {
   const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<Customer[]>([]);
   const [customerList, setCustomerList] = useState<Customer[]>([]);
   const [error, setError] = useState("");
   const printRef = useRef<HTMLDivElement>(null);
 
-  const fetchCustomer = async () => {
-    setError("");
+  const handleQueryChange = async (value: string) => {
+    setQuery(value);
+    if (value.length < 2) return;
+
     try {
       const res = await fetch(
-        `${baseURL}/customers?q=${encodeURIComponent(query)}`
+        `${baseURL}/customers?q=${encodeURIComponent(value)}`
       );
       const data: Customer[] = await res.json();
-      if (data.length === 0) {
-        setError("Customer not found.");
-        return;
-      }
-
-      const newCustomer = data[0];
-      const alreadyAdded = customerList.find(
-        (c) => c.phone === newCustomer.phone
-      );
-      if (!alreadyAdded) {
-        setCustomerList((prev) => [...prev, newCustomer]);
-        setQuery("");
-      } else {
-        setError("Customer already added.");
-      }
+      setSuggestions(data);
     } catch (err) {
-      setError("Error fetching customer.");
+      setSuggestions([]);
+    }
+  };
+
+  const addCustomer = (customer: Customer) => {
+    setError("");
+    const alreadyAdded = customerList.find((c) => c.phone === customer.phone);
+    if (!alreadyAdded) {
+      setCustomerList((prev) => [...prev, customer]);
+      setQuery("");
+      setSuggestions([]);
+    } else {
+      setError("Customer already added.");
     }
   };
 
@@ -111,8 +113,8 @@ const TagPrint: React.FC = () => {
             display: flex;
             box-sizing: border-box;
             page-break-inside: avoid;
-            height: 9.5cm; /* adjust to fit 2 per row vertically */
-            width: 100%; /* ensures full width inside each grid cell */
+            height: 9.5cm;
+            width: 100%;
           }
 
           .label-column {
@@ -144,7 +146,6 @@ const TagPrint: React.FC = () => {
             color: red;
           }
         </style>
-
       `);
 
       printWindow.document.write("</head><body>");
@@ -161,17 +162,47 @@ const TagPrint: React.FC = () => {
     <Box sx={{ maxWidth: "1000px", mx: "auto", px: 2 }}>
       <Box className="hide-printing" mt={4}>
         <Typography variant="h5" gutterBottom>
-          Add Clients to Print
+          Agregar clientes para imprimir etiquetas
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-          <TextField
-            label="Name, email, or phone"
-            fullWidth
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <Button variant="contained" disabled={!query} onClick={fetchCustomer}>
-            Add Client
+          <Box sx={{ width: 300 }}>
+            <Autocomplete
+              freeSolo
+              options={suggestions}
+              getOptionLabel={(option) =>
+                typeof option === "string"
+                  ? option
+                  : `${option.name} - ${option.phone} - ${option.email}`
+              }
+              inputValue={query}
+              onInputChange={(e, value) => handleQueryChange(value)}
+              onChange={(e, selected) => {
+                if (selected && typeof selected !== "string") {
+                  addCustomer(selected);
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Nombre, teléfono o email"
+                  fullWidth
+                />
+              )}
+            />
+          </Box>
+
+          <Button
+            variant="contained"
+            disabled={!query}
+            onClick={async () => {
+              if (suggestions.length > 0) {
+                addCustomer(suggestions[0]);
+              } else {
+                setError("No customer found.");
+              }
+            }}
+          >
+            Agregar Cliente
           </Button>
         </Stack>
         {error && (
@@ -183,9 +214,9 @@ const TagPrint: React.FC = () => {
 
       {customerList.length > 0 && (
         <>
-          <Box className="hide-printing" mb={2}>
+          <Box className="hide-printing" mb={2} mt={2}>
             <Button variant="outlined" onClick={handlePrint}>
-              Print Labels
+              Imprimir etiquetas
             </Button>
           </Box>
 

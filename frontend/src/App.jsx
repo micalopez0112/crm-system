@@ -42,16 +42,16 @@ function App() {
       <Toolbar />
       <List>
         <ListItemButton component={RouterLink} to="/customer">
-          <ListItemText primary="Add Customer" />
+          <ListItemText primary="Agregar Cliente" />
+        </ListItemButton>
+        <ListItemButton component={RouterLink} to="/printTag">
+          <ListItemText primary="Imprimir etiqueta" />
         </ListItemButton>
         <ListItemButton component={RouterLink} to="/order">
           <ListItemText primary="Create Order" />
         </ListItemButton>
         <ListItemButton component={RouterLink} to="/dashboard">
           <ListItemText primary="Dashboard" />
-        </ListItemButton>
-        <ListItemButton component={RouterLink} to="/printTag">
-          <ListItemText primary="Imprimir etiqueta" />
         </ListItemButton>
       </List>
     </div>

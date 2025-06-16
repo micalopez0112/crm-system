@@ -67,17 +67,29 @@ sheets_fields = {
     "company": "RAZON SOCIAL"
 }
 
+from typing import Optional
+from fastapi import FastAPI, Query
+
 @app.get("/customers")
-def list_customers(q: Optional[str] = Query(None)):
+def list_customers(
+    q: Optional[str] = Query(None),
+    id: Optional[str] = Query(None)
+):
     sheet = get_sheet()
     records = sheet.get_all_records()
 
-    if q:
+    if id:
+        # Buscar solo por ID exacto
+        filtered = [r for r in records if str(r.get("ID", "")).strip() == id.strip()]
+    elif q:
+        # Búsqueda general
+        q_lower = q.lower()
         filtered = [
             r for r in records
-            if q.lower() in str(r.get("NOMBRE", "")).lower()
-            or q.lower() in str(r.get("MAIL", "")).lower()
-            or q.lower() in str(r.get("TELEFONO", "")).lower()
+            if q_lower in str(r.get("NOMBRE", "")).lower()
+            or q_lower in str(r.get("RAZON SOCIAL", "")).lower()
+            or q_lower in str(r.get("TELEFONO", "")).lower()
+            or q_lower in str(r.get("ID", "")).lower()
         ]
     else:
         filtered = records
@@ -87,6 +99,7 @@ def list_customers(q: Optional[str] = Query(None)):
         for r in filtered
     ]
     return result
+
 
 
 @app.post("/customer")

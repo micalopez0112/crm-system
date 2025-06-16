@@ -47,12 +47,12 @@ function App() {
         <ListItemButton component={RouterLink} to="/printTag">
           <ListItemText primary="Imprimir etiqueta" />
         </ListItemButton>
-        <ListItemButton component={RouterLink} to="/order">
+        {/* <ListItemButton component={RouterLink} to="/order">
           <ListItemText primary="Create Order" />
         </ListItemButton>
         <ListItemButton component={RouterLink} to="/dashboard">
           <ListItemText primary="Dashboard" />
-        </ListItemButton>
+        </ListItemButton> */}
       </List>
     </div>
   );

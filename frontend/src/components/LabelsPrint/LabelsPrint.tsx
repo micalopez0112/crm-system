@@ -10,6 +10,8 @@ import {
   Stack,
   Box,
   Autocomplete,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { PrintableLabel } from "../PrintableLabel/PrintableLabel";
@@ -32,16 +34,18 @@ const TagPrint: React.FC = () => {
   const [suggestions, setSuggestions] = useState<Customer[]>([]);
   const [customerList, setCustomerList] = useState<Customer[]>([]);
   const [error, setError] = useState("");
+  const [searchById, setSearchById] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   const handleQueryChange = async (value: string) => {
     setQuery(value);
-    if (value.length < 2) return;
+    if (value.length < 0) return;
 
     try {
-      const res = await fetch(
-        `${baseURL}/customers?q=${encodeURIComponent(value)}`
-      );
+      const endpoint = searchById
+        ? `${baseURL}/customers?id=${encodeURIComponent(value)}`
+        : `${baseURL}/customers?q=${encodeURIComponent(value)}`;
+      const res = await fetch(endpoint);
       const data: Customer[] = await res.json();
       setSuggestions(data);
     } catch (err) {
@@ -89,25 +93,14 @@ const TagPrint: React.FC = () => {
 
   const handlePrint = () => {
     if (!printRef.current) return;
-
     const printContents = printRef.current.innerHTML;
     const printWindow = window.open("", "", "width=1200,height=900");
 
     if (printWindow) {
       printWindow.document.write(`
         <style>
-          @page {
-            size: A4 landscape;
-            margin: 0;
-          }
-
-          body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            box-sizing: border-box;
-          }
-
+          @page { size: A4 landscape; margin: 0; }
+          body { margin: 0; padding: 0; font-family: Arial, sans-serif; box-sizing: border-box; }
           .print-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -117,7 +110,6 @@ const TagPrint: React.FC = () => {
             box-sizing: border-box;
             page-break-after: always;
           }
-
           .print-label {
             border: 1px solid black;
             display: flex;
@@ -126,7 +118,6 @@ const TagPrint: React.FC = () => {
             height: 9.5cm;
             width: 100%;
           }
-
           .label-column {
             background: red;
             color: white;
@@ -139,7 +130,6 @@ const TagPrint: React.FC = () => {
             justify-content: center;
             align-items: center;
           }
-
           .label-content {
             padding: 10px;
             flex: 1;
@@ -148,7 +138,6 @@ const TagPrint: React.FC = () => {
             justify-content: space-between;
             font-size: 20px;
           }
-
           .footer {
             font-size: 20px;
             text-align: center;
@@ -157,7 +146,6 @@ const TagPrint: React.FC = () => {
           }
         </style>
       `);
-
       printWindow.document.write("</head><body>");
       printWindow.document.write(printContents);
       printWindow.document.write("</body></html>");
@@ -178,6 +166,7 @@ const TagPrint: React.FC = () => {
           <Box sx={{ width: 300 }}>
             <Autocomplete
               freeSolo
+              filterOptions={(x) => x}
               options={suggestions}
               getOptionLabel={(option) =>
                 typeof option === "string"
@@ -185,21 +174,36 @@ const TagPrint: React.FC = () => {
                   : `${option.name} - ${option.phone} - ${option.email}`
               }
               inputValue={query}
-              onInputChange={(e, value) => handleQueryChange(value)}
+              onInputChange={(event, newInputValue, reason) => {
+                setQuery(newInputValue);
+                handleQueryChange(newInputValue);
+              }}
               onChange={(e, selected) => {
                 if (selected && typeof selected !== "string") {
                   addCustomer(selected);
+                  setQuery(""); // Reset el campo
+                  setSuggestions([]); // Limpia sugerencias
                 }
               }}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Nombre, teléfono o email"
+                  label="ID, Nombre, Teléfono o Email"
                   fullWidth
                 />
               )}
             />
           </Box>
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={searchById}
+                onChange={(e) => setSearchById(e.target.checked)}
+              />
+            }
+            label="Buscar solo por ID"
+          />
 
           <Button
             variant="contained"
@@ -208,13 +212,14 @@ const TagPrint: React.FC = () => {
               if (suggestions.length > 0) {
                 addCustomer(suggestions[0]);
               } else {
-                setError("No customer found.");
+                setError("Cliente no encontrado.");
               }
             }}
           >
             Agregar Cliente
           </Button>
         </Stack>
+
         {error && (
           <Typography color="error" mt={2}>
             {error}

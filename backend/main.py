@@ -8,6 +8,8 @@ import base64
 from models.Customer import Customer
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from models.Order import Order
+from datetime import datetime
 
 # Load environment variables from .env
 load_dotenv()
@@ -129,3 +131,56 @@ def add_customer(customer: Customer):
         return {"message": "Customer added successfully", "id": next_id}
     except Exception as e:
         return {"error": str(e)}
+
+@app.post("/order")
+def create_order(order: Order):
+    from datetime import datetime
+
+    sheet = get_sheet("PULSERAS")
+
+    # Obtener todos los valores
+    values = sheet.get_all_values()
+
+    # Buscar encabezado "FECHA" para ubicar la tabla
+    try:
+        header_row_idx = next(i for i, row in enumerate(values) if "FECHA" in row)
+    except StopIteration:
+        return {"error": "No se encontró la tabla 'Pulseras 2025'"}
+
+    # Determinar la siguiente fila disponible dentro del rango de la tabla
+    data_start_idx = header_row_idx + 1
+    data_rows = values[data_start_idx:]
+
+    # Encontrar la primera fila vacía después del header
+    next_row_idx = data_start_idx + len(data_rows)
+
+    # Buscar cliente por ID
+    customer_sheet = get_sheet("CLIENTES")
+    customers = customer_sheet.get_all_records()
+    customer = next((c for c in customers if str(c.get("ID", "")) == str(order.customer_id)), None)
+
+    if not customer:
+        return {"error": "Cliente no encontrado"}
+
+    fecha = datetime.now().strftime("%d/%m/%Y")
+    nombre = customer.get("NOMBRE", "")
+    telefono = customer.get("TELEFONO", "")
+
+    nueva_fila = [
+        fecha,
+        nombre,
+        telefono,
+        True if order.redes else False,
+        str(order.cantidad),
+        order.modelo,
+        str(order.precio),
+        order.pedido,
+        # order.producto_base64 or "",
+    ]
+
+    try:
+        sheet.insert_row(nueva_fila, index=next_row_idx + 1)
+        return {"message": "Pedido guardado correctamente"}
+    except Exception as e:
+        return {"error": str(e)}
+

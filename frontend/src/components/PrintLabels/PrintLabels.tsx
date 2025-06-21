@@ -118,6 +118,13 @@ const TagPrint: React.FC = () => {
             height: 9.5cm;
             width: 100%;
           }
+
+          /* Custom placement using nth-child */
+          .print-label:nth-child(1) { grid-column: 2; grid-row: 1; }
+          .print-label:nth-child(2) { grid-column: 2; grid-row: 2; }
+          .print-label:nth-child(3) { grid-column: 1; grid-row: 1; }
+          .print-label:nth-child(4) { grid-column: 1; grid-row: 2; }
+
           .label-column {
             background: red;
             color: white;

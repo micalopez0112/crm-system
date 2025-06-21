@@ -21,9 +21,9 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
 
-import OrderForm from "../src/components/OrderForm";
+import OrderForm from "./components/AddOrder/OrderForm.tsx";
 import Dashboard from "../src/components/Dashboard";
-import TagPrint from "./components/LabelsPrint/LabelsPrint.tsx";
+import TagPrint from "./components/PrintLabels/PrintLabels.tsx";
 import AddCustomer from "./components/AddCustomer/AddCustomer.tsx";
 
 const drawerWidth = 240;
@@ -47,12 +47,12 @@ function App() {
         <ListItemButton component={RouterLink} to="/printTag">
           <ListItemText primary="Imprimir etiqueta" />
         </ListItemButton>
-        {/* <ListItemButton component={RouterLink} to="/order">
+        <ListItemButton component={RouterLink} to="/order">
           <ListItemText primary="Create Order" />
         </ListItemButton>
         <ListItemButton component={RouterLink} to="/dashboard">
           <ListItemText primary="Dashboard" />
-        </ListItemButton> */}
+        </ListItemButton>
       </List>
     </div>
   );
@@ -85,7 +85,6 @@ function App() {
           </Toolbar>
         </AppBar>
 
-        {/* Responsive Drawer */}
         <Box
           component="nav"
           sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -97,7 +96,7 @@ function App() {
               open={mobileOpen}
               onClose={handleDrawerToggle}
               ModalProps={{
-                keepMounted: true, // Better open performance on mobile
+                keepMounted: true,
               }}
               sx={{
                 [`& .MuiDrawer-paper`]: {

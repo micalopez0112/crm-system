@@ -191,10 +191,9 @@ export default function OrderForm() {
               value={formData.pedido}
               onChange={handleChange}
               multiline
-              rows={3}
               fullWidth
               size={isMobile ? "small" : "medium"}
-              sx={{ gridColumn: { sm: "span 2" } }}
+              sx={{ gridColumn: { sm: "span 1" } }}
             />
 
             <Box sx={{ gridColumn: "span 2" }}>

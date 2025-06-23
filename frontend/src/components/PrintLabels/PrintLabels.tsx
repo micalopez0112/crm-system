@@ -9,57 +9,22 @@ import {
   IconButton,
   Stack,
   Box,
-  Autocomplete,
-  Checkbox,
-  FormControlLabel,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { PrintableLabel } from "../PrintableLabel/PrintableLabel";
-
-interface Customer {
-  id: number;
-  name: string;
-  phone: string;
-  email: string;
-  direction: string;
-  city: string;
-  department: string;
-  company?: string;
-}
-
-const baseURL = (import.meta as any).env.VITE_API_BASE_URL;
+import CustomerAutocomplete from "../CustomerAutocomplete/CustomerAutocomplete.tsx";
+import { Customer } from "../../models/Customer.tsx";
 
 const TagPrint: React.FC = () => {
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<Customer[]>([]);
   const [customerList, setCustomerList] = useState<Customer[]>([]);
   const [error, setError] = useState("");
-  const [searchById, setSearchById] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
-
-  const handleQueryChange = async (value: string) => {
-    setQuery(value);
-    if (value.length < 0) return;
-
-    try {
-      const endpoint = searchById
-        ? `${baseURL}/customers?id=${encodeURIComponent(value)}`
-        : `${baseURL}/customers?q=${encodeURIComponent(value)}`;
-      const res = await fetch(endpoint);
-      const data: Customer[] = await res.json();
-      setSuggestions(data);
-    } catch (err) {
-      setSuggestions([]);
-    }
-  };
 
   const addCustomer = (customer: Customer) => {
     setError("");
     const alreadyAdded = customerList.find((c) => c.phone === customer.phone);
     if (!alreadyAdded) {
       setCustomerList((prev) => [...prev, customer]);
-      setQuery("");
-      setSuggestions([]);
     } else {
       setError("Customer already added.");
     }
@@ -119,7 +84,6 @@ const TagPrint: React.FC = () => {
             width: 100%;
           }
 
-          /* Custom placement using nth-child */
           .print-label:nth-child(1) { grid-column: 2; grid-row: 1; }
           .print-label:nth-child(2) { grid-column: 2; grid-row: 2; }
           .print-label:nth-child(3) { grid-column: 1; grid-row: 1; }
@@ -170,61 +134,7 @@ const TagPrint: React.FC = () => {
           Agregar clientes para imprimir etiquetas
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-          <Box sx={{ width: 300 }}>
-            <Autocomplete
-              freeSolo
-              filterOptions={(x) => x}
-              options={suggestions}
-              getOptionLabel={(option) =>
-                typeof option === "string"
-                  ? option
-                  : `${option.name} - ${option.phone} - ${option.email}`
-              }
-              inputValue={query}
-              onInputChange={(event, newInputValue, reason) => {
-                setQuery(newInputValue);
-                handleQueryChange(newInputValue);
-              }}
-              onChange={(e, selected) => {
-                if (selected && typeof selected !== "string") {
-                  addCustomer(selected);
-                  setQuery(""); // Reset el campo
-                  setSuggestions([]); // Limpia sugerencias
-                }
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="ID, Nombre, Teléfono o Email"
-                  fullWidth
-                />
-              )}
-            />
-          </Box>
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={searchById}
-                onChange={(e) => setSearchById(e.target.checked)}
-              />
-            }
-            label="Buscar solo por ID"
-          />
-
-          <Button
-            variant="contained"
-            disabled={!query}
-            onClick={async () => {
-              if (suggestions.length > 0) {
-                addCustomer(suggestions[0]);
-              } else {
-                setError("Cliente no encontrado.");
-              }
-            }}
-          >
-            Agregar Cliente
-          </Button>
+          <CustomerAutocomplete onSelect={addCustomer} />
         </Stack>
 
         {error && (

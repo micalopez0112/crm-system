@@ -43,7 +43,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const response = await axios.get("/customers", {
+        const response = await axios.get("/customers-list", {
           params: { page: customerPage, limit },
         });
         setCustomers(response.data.data);

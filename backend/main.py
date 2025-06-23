@@ -190,41 +190,46 @@ def create_order(order: Order):
     fecha = datetime.now().strftime("%d/%m/%Y")
     nombre = customer.get("NOMBRE", "")
     telefono = customer.get("TELEFONO", "")
-    
-    print(nombre)
-    print(telefono)
 
     try:
-        print('bbb')
-        image_url = upload_image_to_drive(order.producto_base64, f"pulsera_{order.customer_id}_{datetime.now().timestamp()}.png")
-        formula = f'=IMAGE("{image_url}";4;{IMG_HEIGHT};{IMG_WIDTH})'
+        image_url = upload_image_to_drive(
+            order.producto_base64,
+            f"pulsera_{order.customer_id}_{datetime.now().timestamp()}.png"
+        )
+        formula = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
 
         nueva_fila = [
             fecha,
             nombre,
             telefono,
-            "Sí" if order.redes else "No",
+            True if order.redes else False,
             str(order.cantidad),
             order.modelo,
             str(order.precio),
             order.pedido,
-            ""  # Imagen irá después
+            ""  # Imagen va después
         ]
 
-        sheet.append_row(nueva_fila)
+        # Obtener todas las filas
+        all_rows = sheet.get_all_values()
 
-        # Obtener el número de la última fila
-        last_row = len(sheet.get_all_values())
+        # Buscar la última fila con fecha en la columna A
+        last_order_row_index = 0
+        for i, row in enumerate(all_rows):
+            if row and row[0].strip():  # si hay algo en la columna A
+                last_order_row_index = i + 1  # +1 porque gspread es 1-indexed
 
-        # Insertar fórmula correctamente sin que se escape con comilla '
-        formula = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
-        sheet.update_cell(last_row, 9, formula)  # columna 9 = "PRODUCTO"
+        # Insertar nueva fila debajo de la última fila con pedido
+        sheet.insert_row(nueva_fila, index=last_order_row_index + 1)
+
+        # Insertar la fórmula de imagen en la columna 9 (I)
+        sheet.update_cell(last_order_row_index + 1, 9, formula)
+
         return {"message": "Pedido guardado correctamente"}
 
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 def upload_image_to_drive(base64_str: str, filename: str) -> str:

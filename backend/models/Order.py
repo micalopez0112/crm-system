@@ -8,4 +8,4 @@ class Order(BaseModel):
     modelo: str
     precio: Union[str, float]
     pedido: str
-    # producto_base64: Optional[str] = None
+    producto_base64: Optional[str] = None

@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Query
+from datetime import datetime
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from dotenv import load_dotenv
@@ -6,10 +7,12 @@ import os
 import json
 import base64
 from models.Customer import Customer
-import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from models.Order import Order
-from datetime import datetime
+import io
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
+import gspread
 
 # Load environment variables from .env
 load_dotenv()
@@ -69,8 +72,6 @@ sheets_fields = {
     "company": "RAZON SOCIAL"
 }
 
-from typing import Optional
-from fastapi import FastAPI, Query
 
 @app.get("/customers")
 def list_customers(
@@ -102,6 +103,47 @@ def list_customers(
     ]
     return result
 
+@app.get("/customers-list")
+def list_customers(
+    q: Optional[str] = Query(None),
+    id: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1)
+):
+    sheet = get_sheet()
+    records = sheet.get_all_records()
+
+    if id:
+        filtered = [r for r in records if str(r.get("ID", "")).strip() == id.strip()]
+    elif q:
+        q_lower = q.lower()
+        filtered = [
+            r for r in records
+            if q_lower in str(r.get("NOMBRE", "")).lower()
+            or q_lower in str(r.get("RAZON SOCIAL", "")).lower()
+            or q_lower in str(r.get("TELEFONO", "")).lower()
+            or q_lower in str(r.get("ID", "")).lower()
+        ]
+    else:
+        filtered = records
+
+    result = [
+        {key: r.get(sheet_key, "") for key, sheet_key in sheets_fields.items()}
+        for r in filtered
+    ]
+
+    # Pagination
+    start = (page - 1) * limit
+    end = start + limit
+    paginated = result[start:end]
+
+    return {
+        "data": paginated,
+        "total": len(result),
+        "page": page,
+        "limit": limit
+    }
+
 
 
 @app.post("/customer")
@@ -132,55 +174,119 @@ def add_customer(customer: Customer):
     except Exception as e:
         return {"error": str(e)}
 
+IMG_HEIGHT = 50
+IMG_WIDTH = 300
+
 @app.post("/order")
 def create_order(order: Order):
-    from datetime import datetime
-
     sheet = get_sheet("PULSERAS")
-
-    # Obtener todos los valores
-    values = sheet.get_all_values()
-
-    # Buscar encabezado "FECHA" para ubicar la tabla
-    try:
-        header_row_idx = next(i for i, row in enumerate(values) if "FECHA" in row)
-    except StopIteration:
-        return {"error": "No se encontró la tabla 'Pulseras 2025'"}
-
-    # Determinar la siguiente fila disponible dentro del rango de la tabla
-    data_start_idx = header_row_idx + 1
-    data_rows = values[data_start_idx:]
-
-    # Encontrar la primera fila vacía después del header
-    next_row_idx = data_start_idx + len(data_rows)
-
-    # Buscar cliente por ID
     customer_sheet = get_sheet("CLIENTES")
     customers = customer_sheet.get_all_records()
-    customer = next((c for c in customers if str(c.get("ID", "")) == str(order.customer_id)), None)
 
+    customer = next((c for c in customers if str(c.get("ID", "")) == str(order.customer_id)), None)
     if not customer:
-        return {"error": "Cliente no encontrado"}
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
     fecha = datetime.now().strftime("%d/%m/%Y")
     nombre = customer.get("NOMBRE", "")
     telefono = customer.get("TELEFONO", "")
-
-    nueva_fila = [
-        fecha,
-        nombre,
-        telefono,
-        True if order.redes else False,
-        str(order.cantidad),
-        order.modelo,
-        str(order.precio),
-        order.pedido,
-        # order.producto_base64 or "",
-    ]
+    
+    print(nombre)
+    print(telefono)
 
     try:
-        sheet.insert_row(nueva_fila, index=next_row_idx + 1)
-        return {"message": "Pedido guardado correctamente"}
-    except Exception as e:
-        return {"error": str(e)}
+        print('bbb')
+        image_url = upload_image_to_drive(order.producto_base64, f"pulsera_{order.customer_id}_{datetime.now().timestamp()}.png")
+        formula = f'=IMAGE("{image_url}";4;{IMG_HEIGHT};{IMG_WIDTH})'
 
+        nueva_fila = [
+            fecha,
+            nombre,
+            telefono,
+            "Sí" if order.redes else "No",
+            str(order.cantidad),
+            order.modelo,
+            str(order.precio),
+            order.pedido,
+            ""  # Imagen irá después
+        ]
+
+        sheet.append_row(nueva_fila)
+
+        # Obtener el número de la última fila
+        last_row = len(sheet.get_all_values())
+
+        # Insertar fórmula correctamente sin que se escape con comilla '
+        formula = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
+        sheet.update_cell(last_row, 9, formula)  # columna 9 = "PRODUCTO"
+        return {"message": "Pedido guardado correctamente"}
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+def upload_image_to_drive(base64_str: str, filename: str) -> str:
+    print(f'aaa {base64_str} {filename}')
+    creds_json = base64.b64decode(os.getenv("GOOGLE_SHEETS_CREDENTIALS_B64")).decode()
+    creds_dict = json.loads(creds_json)
+    print(creds_dict)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, [
+        "https://www.googleapis.com/auth/drive"
+    ])
+    
+    print(f'creds {creds}')
+
+    drive_service = build("drive", "v3", credentials=creds)
+    print(f'drive_service {drive_service}')
+
+    header, encoded = base64_str.split(",", 1)
+    file_bytes = io.BytesIO(base64.b64decode(encoded))
+
+    media = MediaIoBaseUpload(file_bytes, mimetype="image/png", resumable=True)
+    file_metadata = {
+        "name": filename,
+        "parents": [os.getenv("GOOGLE_DRIVE_FOLDER_ID")]
+    }
+
+    file = drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+    drive_service.permissions().create(fileId=file["id"], body={"type": "anyone", "role": "reader"}).execute()
+
+    return f"https://drive.google.com/uc?export=view&id={file['id']}"
+
+@app.get("/orders")
+def list_orders(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1)
+):
+    sheet = get_sheet("PULSERAS")
+    records = sheet.get_all_records()
+
+    result = []
+    for idx, row in enumerate(records):
+        order = {
+            "id": idx + 2,
+            "date": row.get("FECHA", ""),
+            "customer_name": row.get("NOMBRE", ""),
+            "phone": row.get("TELEFONO", ""),
+            "redes": row.get("REDES", ""),
+            "quantity": row.get("CANTIDAD", ""),
+            "model": row.get("MODELO", ""),
+            "price": row.get("PRECIO U", ""),
+            "description": row.get("PEDIDO", ""),
+            "logo": row.get("PRODUCTO", ""),
+        }
+        result.append(order)
+
+    # Pagination
+    start = (page - 1) * limit
+    end = start + limit
+    paginated = result[start:end]
+
+    return {
+        "data": paginated,
+        "total": len(result),
+        "page": page,
+        "limit": limit
+    }

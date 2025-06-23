@@ -22,7 +22,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
 
 import OrderForm from "./components/AddOrder/OrderForm.tsx";
-import Dashboard from "../src/components/Dashboard";
+import Dashboard from "../src/components/Dashboard/Dashboard.tsx";
 import TagPrint from "./components/PrintLabels/PrintLabels.tsx";
 import AddCustomer from "./components/AddCustomer/AddCustomer.tsx";
 
@@ -48,7 +48,7 @@ function App() {
           <ListItemText primary="Imprimir etiqueta" />
         </ListItemButton>
         <ListItemButton component={RouterLink} to="/order">
-          <ListItemText primary="Create Order" />
+          <ListItemText primary="Crear Pedido" />
         </ListItemButton>
         <ListItemButton component={RouterLink} to="/dashboard">
           <ListItemText primary="Dashboard" />

@@ -198,6 +198,7 @@ def create_order(order: Order):
         )
         formula = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
 
+        total = int(order.cantidad) * float(order.precio)
         nueva_fila = [
             fecha,
             nombre,
@@ -207,8 +208,9 @@ def create_order(order: Order):
             order.modelo,
             str(order.precio),
             order.pedido,
-            ""  # Imagen va después
-        ]
+            "",
+            total,
+            ]
 
         # Obtener todas las filas
         all_rows = sheet.get_all_values()

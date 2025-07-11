@@ -192,24 +192,20 @@ def create_order(order: Order):
     telefono = customer.get("TELEFONO", "")
 
     try:
-        image_url = upload_image_to_drive(
-            order.producto_base64,
-            f"pulsera_{order.customer_id}_{datetime.now().timestamp()}.png"
-        )
-        formula = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
-
-        total = int(order.cantidad) * float(order.precio)
+        total = order.cantidad * order.precio
         nueva_fila = [
             fecha,
             nombre,
             telefono,
             True if order.redes else False,
-            str(order.cantidad),
+            order.cantidad,
             order.modelo,
-            str(order.precio),
+            order.precio,
             order.pedido,
             "",
             total,
+            order.senia,
+            total - order.senia
             ]
 
         # Obtener todas las filas
@@ -223,9 +219,26 @@ def create_order(order: Order):
 
         # Insertar nueva fila debajo de la última fila con pedido
         sheet.insert_row(nueva_fila, index=last_order_row_index + 1)
+        
+        if (order.producto_base64):
+            image_url = upload_image_to_drive(
+                order.producto_base64,
+                f"pulsera_{order.customer_id}_{datetime.now().timestamp()}.png"
+            )
+            formula = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
 
-        # Insertar la fórmula de imagen en la columna 9 (I)
-        sheet.update_cell(last_order_row_index + 1, 9, formula)
+            # Insertar la fórmula de imagen en la columna 9 (I)
+            sheet.update_cell(last_order_row_index + 1, 9, formula)
+        
+        if float(order.senia) == total:
+            total_cell = f"J{last_order_row_index + 1}"
+            sheet.format(total_cell, {
+                "backgroundColor": {
+                    "red": 0.0,
+                    "green": 1.0,
+                    "blue": 0.0
+                }
+            })
 
         return {"message": "Pedido guardado correctamente"}
 

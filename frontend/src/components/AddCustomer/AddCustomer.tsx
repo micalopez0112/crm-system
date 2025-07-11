@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from "@mui/material";
 import axios from "../../../api/api";
 
@@ -29,6 +30,7 @@ export default function AddCustomer() {
 
   const [openModal, setOpenModal] = useState(false);
   const [rawText, setRawText] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -40,6 +42,7 @@ export default function AddCustomer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await axios.post("/customer", formData);
       alert("Customer created!");
@@ -55,6 +58,8 @@ export default function AddCustomer() {
       });
     } catch (err) {
       alert("Error creating customer");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,9 +193,11 @@ export default function AddCustomer() {
                 variant="contained"
                 size={isMobile ? "medium" : "large"}
                 sx={{ py: { xs: 1, sm: 1.5 } }}
+                disabled={loading}
               >
-                Agregar cliente
+                {loading ? "Agregando..." : "Agregar cliente"}
               </Button>
+
               <Button
                 variant="outlined"
                 size={isMobile ? "medium" : "large"}
@@ -203,6 +210,12 @@ export default function AddCustomer() {
           </Stack>
         </Box>
       </Paper>
+
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <CircularProgress />
+        </Box>
+      )}
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth>
         <DialogTitle>Pegar datos del cliente</DialogTitle>

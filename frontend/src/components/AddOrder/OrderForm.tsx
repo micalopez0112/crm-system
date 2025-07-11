@@ -14,6 +14,7 @@ import {
   InputLabel,
   FormControl,
   Select,
+  CircularProgress,
 } from "@mui/material";
 import axios from "../../../api/api";
 import CustomerAutocomplete from "../CustomerAutocomplete/CustomerAutocomplete";
@@ -24,12 +25,15 @@ export default function OrderForm() {
   const [formData, setFormData] = useState({
     customer_id: null,
     redes: false,
-    cantidad: 1,
-    precio: "",
+    cantidad: 0,
+    precio: 0,
     modelo: "",
     pedido: "",
+    senia: 0,
     producto: null as File | string | null,
   });
+
+  const [loading, setLoading] = useState(false);
 
   const [preview, setPreview] = useState<string | null>(null);
   const theme = useTheme();
@@ -39,13 +43,16 @@ export default function OrderForm() {
     setFormData((prev) => ({ ...prev, customer_id: customer.id }));
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : ["cantidad", "precio", "senia"].includes(name)
+          ? Number(value)
+          : value,
     }));
   };
 
@@ -70,37 +77,27 @@ export default function OrderForm() {
         reader.onload = (event) => {
           const base64 = event.target?.result as string;
           setFormData((prev) => ({ ...prev, producto: base64 }));
-          setPreview(base64); // optional
+          setPreview(base64);
         };
         if (file) reader.readAsDataURL(file);
       }
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.customer_id) return alert("Seleccioná un cliente");
 
-    const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value !== null) {
-        if (key === "producto" && typeof value === "string") {
-          data.append("producto_base64", value); // lo podés procesar diferente del lado del backend
-        } else {
-          data.append(key, value as any);
-        }
-      }
-    });
-
+    setLoading(true);
     try {
-      console.log(data);
       await axios.post("/order", {
         customer_id: formData.customer_id,
         redes: formData.redes,
-        cantidad: formData.cantidad,
+        cantidad: Number(formData.cantidad),
         modelo: formData.modelo,
-        precio: formData.precio,
+        precio: Number(formData.precio),
         pedido: formData.pedido,
+        senia: Number(formData.senia),
         producto_base64: formData.producto,
       });
 
@@ -108,6 +105,8 @@ export default function OrderForm() {
     } catch (err) {
       console.error(err);
       alert("❌ Error al crear pedido");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,7 +142,6 @@ export default function OrderForm() {
                 />
               }
               label="¿Es por redes?"
-              sx={{ gridColumn: { sm: "span 2" } }}
             />
 
             <TextField
@@ -196,7 +194,17 @@ export default function OrderForm() {
               sx={{ gridColumn: { sm: "span 1" } }}
             />
 
-            <Box sx={{ gridColumn: "span 2" }}>
+            <TextField
+              name="senia"
+              label="Seña"
+              type="number"
+              value={formData.senia}
+              onChange={handleChange}
+              fullWidth
+              size={isMobile ? "small" : "medium"}
+            />
+
+            {/* <Box sx={{ gridColumn: "span 2" }}>
               <Button component="label" variant="outlined">
                 Subir imagen del producto
                 <input
@@ -226,7 +234,7 @@ export default function OrderForm() {
                   />
                 </Box>
               )}
-            </Box>
+            </Box> */}
 
             <Box sx={{ gridColumn: "span 2", mt: 2 }}>
               <Button
@@ -234,13 +242,19 @@ export default function OrderForm() {
                 variant="contained"
                 size={isMobile ? "medium" : "large"}
                 sx={{ py: { xs: 1, sm: 1.5 } }}
+                disabled={loading}
               >
-                Crear pedido
+                {loading ? "Creando pedido..." : "Crear pedido"}
               </Button>
             </Box>
           </Stack>
         </Box>
       </Paper>
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <CircularProgress />
+        </Box>
+      )}
     </Box>
   );
 }

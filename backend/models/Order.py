@@ -6,6 +6,7 @@ class Order(BaseModel):
     redes: bool
     cantidad: int
     modelo: str
-    precio: Union[str, float]
+    precio: float
     pedido: str
+    senia: Optional[float]
     producto_base64: Optional[str] = None

@@ -2,8 +2,10 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
+  Navigate,
   Link as RouterLink,
 } from "react-router-dom";
+
 import {
   Box,
   Drawer,
@@ -41,6 +43,9 @@ function App() {
     <div>
       <Toolbar />
       <List>
+        <ListItemButton component={RouterLink} to="/dashboard">
+          <ListItemText primary="Dashboard" />
+        </ListItemButton>
         <ListItemButton component={RouterLink} to="/customer">
           <ListItemText primary="Agregar Cliente" />
         </ListItemButton>
@@ -49,9 +54,6 @@ function App() {
         </ListItemButton>
         <ListItemButton component={RouterLink} to="/order">
           <ListItemText primary="Crear Pedido" />
-        </ListItemButton>
-        <ListItemButton component={RouterLink} to="/dashboard">
-          <ListItemText primary="Dashboard" />
         </ListItemButton>
       </List>
     </div>
@@ -62,7 +64,6 @@ function App() {
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
 
-        {/* AppBar */}
         <AppBar
           position="fixed"
           sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
@@ -123,7 +124,6 @@ function App() {
           )}
         </Box>
 
-        {/* Main Content */}
         <Box
           component="main"
           sx={{
@@ -134,6 +134,7 @@ function App() {
         >
           <Toolbar />
           <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/customer" element={<AddCustomer />} />
             <Route path="/order" element={<OrderForm />} />
             <Route path="/dashboard" element={<Dashboard />} />

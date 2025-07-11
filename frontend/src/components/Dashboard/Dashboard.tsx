@@ -11,6 +11,7 @@ import {
   TableBody,
   Paper,
   Pagination,
+  CircularProgress,
 } from "@mui/material";
 
 type Customer = {
@@ -38,10 +39,14 @@ export default function Dashboard() {
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
 
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
   const limit = 10;
 
   useEffect(() => {
     const fetchCustomers = async () => {
+      setLoadingCustomers(true);
       try {
         const response = await axios.get("/customers-list", {
           params: { page: customerPage, limit },
@@ -50,10 +55,13 @@ export default function Dashboard() {
         setTotalCustomers(response.data.total);
       } catch (err) {
         console.error("Failed to load customers:", err);
+      } finally {
+        setLoadingCustomers(false);
       }
     };
 
     const fetchOrders = async () => {
+      setLoadingOrders(true);
       try {
         const response = await axios.get("/orders", {
           params: { page: orderPage, limit },
@@ -62,6 +70,8 @@ export default function Dashboard() {
         setTotalOrders(response.data.total);
       } catch (err) {
         console.error("Failed to load orders:", err);
+      } finally {
+        setLoadingOrders(false);
       }
     };
 
@@ -72,11 +82,11 @@ export default function Dashboard() {
   return (
     <Box padding={4}>
       <Typography variant="h4" gutterBottom>
-        📋 Dashboard
+        Dashboard
       </Typography>
 
       <Typography variant="h5" gutterBottom>
-        👥 Customers
+        Clientes
       </Typography>
       <Paper elevation={2} sx={{ mb: 4, width: "100%", overflowX: "auto" }}>
         <Box minWidth={700}>
@@ -95,13 +105,21 @@ export default function Dashboard() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {customers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>{customer.id}</TableCell>
-                  <TableCell>{customer.name}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
+              {loadingCustomers ? (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    <CircularProgress />
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                customers.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell>{customer.id}</TableCell>
+                    <TableCell>{customer.name}</TableCell>
+                    <TableCell>{customer.phone}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </Box>
@@ -115,7 +133,7 @@ export default function Dashboard() {
       </Paper>
 
       <Typography variant="h5" gutterBottom>
-        📦 Orders
+        Pedidos
       </Typography>
       <Paper elevation={2} sx={{ width: "100%", overflowX: "auto" }}>
         <Box minWidth={900}>
@@ -146,25 +164,33 @@ export default function Dashboard() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>{order.customer_name}</TableCell>
-                  <TableCell>{order.phone}</TableCell>
-                  <TableCell>{order.description}</TableCell>
-                  <TableCell>{order.quantity}</TableCell>
-                  <TableCell>{order.model}</TableCell>
-                  <TableCell>{order.price}</TableCell>
-                  <TableCell>
-                    {order.logo && (
-                      <img
-                        src={order.logo}
-                        alt="Logo"
-                        style={{ maxWidth: 80, borderRadius: 4 }}
-                      />
-                    )}
+              {loadingOrders ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                orders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell>{order.customer_name}</TableCell>
+                    <TableCell>{order.phone}</TableCell>
+                    <TableCell>{order.description}</TableCell>
+                    <TableCell>{order.quantity}</TableCell>
+                    <TableCell>{order.model}</TableCell>
+                    <TableCell>{order.price}</TableCell>
+                    <TableCell>
+                      {order.logo && (
+                        <img
+                          src={order.logo}
+                          alt="Logo"
+                          style={{ maxWidth: 80, borderRadius: 4 }}
+                        />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </Box>

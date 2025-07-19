@@ -25,11 +25,11 @@ export default function OrderForm() {
   const [formData, setFormData] = useState({
     customer_id: null,
     redes: false,
-    cantidad: 0,
-    precio: 0,
+    cantidad: null,
+    precio: null,
     modelo: "",
     pedido: "",
-    senia: 0,
+    senia: null,
     producto: null as File | string | null,
   });
 

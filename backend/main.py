@@ -193,6 +193,14 @@ def create_order(order: Order):
 
     try:
         total = order.cantidad * order.precio
+        
+        all_rows = sheet.get_all_values()
+        last_order_row_index = 0
+        for i, row in enumerate(all_rows):
+            if row and row[0].strip():
+                last_order_row_index = i + 1
+        row_index = last_order_row_index + 1
+
         nueva_fila = [
             fecha,
             nombre,
@@ -202,41 +210,31 @@ def create_order(order: Order):
             order.modelo,
             order.precio,
             order.pedido,
-            "",
-            total,
+            "",        # Imagen (columna I)
+            total,     # Total (J)
             order.senia,
-            total - order.senia
-            ]
+            ""         # Restante (L)
+        ]
 
-        # Obtener todas las filas
-        all_rows = sheet.get_all_values()
+        sheet.insert_row(nueva_fila, index=row_index)
 
-        # Buscar la última fila con fecha en la columna A
-        last_order_row_index = 0
-        for i, row in enumerate(all_rows):
-            if row and row[0].strip():  # si hay algo en la columna A
-                last_order_row_index = i + 1  # +1 porque gspread es 1-indexed
-
-        # Insertar nueva fila debajo de la última fila con pedido
-        sheet.insert_row(nueva_fila, index=last_order_row_index + 1)
-        
-        if (order.producto_base64):
+        if order.producto_base64:
             image_url = upload_image_to_drive(
                 order.producto_base64,
                 f"pulsera_{order.customer_id}_{datetime.now().timestamp()}.png"
             )
-            formula = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
+            formula_imagen = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
+            sheet.update_cell(row_index, 9, formula_imagen)  # Columna I
 
-            # Insertar la fórmula de imagen en la columna 9 (I)
-            sheet.update_cell(last_order_row_index + 1, 9, formula)
-        
+        formula_restante = f"=J{row_index}-K{row_index}"
+        sheet.update_cell(row_index, 12, formula_restante)  # Columna L
+
         if float(order.senia) == total:
-            total_cell = f"J{last_order_row_index + 1}"
-            sheet.format(total_cell, {
+            sheet.format(f"L{row_index}", {
                 "backgroundColor": {
-                    "red": 0.0,
-                    "green": 1.0,
-                    "blue": 0.0
+                    "red": 1.0,
+                    "green": 0.8,
+                    "blue": 0.6
                 }
             })
 

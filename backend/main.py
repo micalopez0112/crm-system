@@ -188,6 +188,7 @@ def create_order(order: Order):
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
     fecha = datetime.now().strftime("%d/%m/%Y")
+    id_cliente = customer.get("ID", "")
     nombre = customer.get("NOMBRE", "")
     telefono = customer.get("TELEFONO", "")
 
@@ -203,6 +204,7 @@ def create_order(order: Order):
 
         nueva_fila = [
             fecha,
+            id_cliente,
             nombre,
             telefono,
             True if order.redes else False,

@@ -1,4 +1,5 @@
 // src/components/Dashboard.tsx
+
 import { useEffect, useState } from "react";
 import axios from "../../../api/api";
 import {
@@ -12,6 +13,8 @@ import {
   Paper,
   Pagination,
   CircularProgress,
+  Tabs,
+  Tab,
 } from "@mui/material";
 
 type Customer = {
@@ -32,10 +35,14 @@ type Order = {
 };
 
 export default function Dashboard() {
+  const [tab, setTab] = useState(0);
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+
   const [customerPage, setCustomerPage] = useState(1);
   const [orderPage, setOrderPage] = useState(1);
+
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
 
@@ -60,6 +67,10 @@ export default function Dashboard() {
       }
     };
 
+    fetchCustomers();
+  }, [customerPage]);
+
+  useEffect(() => {
     const fetchOrders = async () => {
       setLoadingOrders(true);
       try {
@@ -75,9 +86,8 @@ export default function Dashboard() {
       }
     };
 
-    fetchCustomers();
     fetchOrders();
-  }, [customerPage, orderPage]);
+  }, [orderPage]);
 
   return (
     <Box padding={4}>
@@ -85,123 +95,126 @@ export default function Dashboard() {
         Dashboard
       </Typography>
 
-      <Typography variant="h5" gutterBottom>
-        Clientes
-      </Typography>
-      <Paper elevation={2} sx={{ mb: 4, width: "100%", overflowX: "auto" }}>
-        <Box minWidth={700}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <b>ID</b>
-                </TableCell>
-                <TableCell>
-                  <b>Name</b>
-                </TableCell>
-                <TableCell>
-                  <b>Phone</b>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loadingCustomers ? (
-                <TableRow>
-                  <TableCell colSpan={3} align="center">
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                customers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell>{customer.id}</TableCell>
-                    <TableCell>{customer.name}</TableCell>
-                    <TableCell>{customer.phone}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Box>
-        <Box display="flex" justifyContent="center" p={2}>
-          <Pagination
-            count={Math.ceil(totalCustomers / limit)}
-            page={customerPage}
-            onChange={(_, value) => setCustomerPage(value)}
-          />
-        </Box>
-      </Paper>
+      <Tabs value={tab} onChange={(_, newTab) => setTab(newTab)} sx={{ mb: 4 }}>
+        <Tab label="Clientes" />
+        <Tab label="Pedidos" />
+      </Tabs>
 
-      <Typography variant="h5" gutterBottom>
-        Pedidos
-      </Typography>
-      <Paper elevation={2} sx={{ width: "100%", overflowX: "auto" }}>
-        <Box minWidth={900}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <b>Customer</b>
-                </TableCell>
-                <TableCell>
-                  <b>Phone</b>
-                </TableCell>
-                <TableCell>
-                  <b>Description</b>
-                </TableCell>
-                <TableCell>
-                  <b>Qty</b>
-                </TableCell>
-                <TableCell>
-                  <b>Model</b>
-                </TableCell>
-                <TableCell>
-                  <b>Price</b>
-                </TableCell>
-                <TableCell>
-                  <b>Logo</b>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loadingOrders ? (
+      {tab === 0 && (
+        <Paper elevation={2} sx={{ width: "100%", overflowX: "auto" }}>
+          <Box minWidth={700}>
+            <Table>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    <CircularProgress />
+                  <TableCell>
+                    <b>ID</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Nombre</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Teléfono</b>
                   </TableCell>
                 </TableRow>
-              ) : (
-                orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>{order.customer_name}</TableCell>
-                    <TableCell>{order.phone}</TableCell>
-                    <TableCell>{order.description}</TableCell>
-                    <TableCell>{order.quantity}</TableCell>
-                    <TableCell>{order.model}</TableCell>
-                    <TableCell>{order.price}</TableCell>
-                    <TableCell>
-                      {order.logo && (
-                        <img
-                          src={order.logo}
-                          alt="Logo"
-                          style={{ maxWidth: 80, borderRadius: 4 }}
-                        />
-                      )}
+              </TableHead>
+              <TableBody>
+                {loadingCustomers ? (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      <CircularProgress />
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Box>
-        <Box display="flex" justifyContent="center" p={2}>
-          <Pagination
-            count={Math.ceil(totalOrders / limit)}
-            page={orderPage}
-            onChange={(_, value) => setOrderPage(value)}
-          />
-        </Box>
-      </Paper>
+                ) : (
+                  customers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell>{customer.id}</TableCell>
+                      <TableCell>{customer.name}</TableCell>
+                      <TableCell>{customer.phone}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Box>
+          <Box display="flex" justifyContent="center" p={2}>
+            <Pagination
+              count={Math.ceil(totalCustomers / limit)}
+              page={customerPage}
+              onChange={(_, value) => setCustomerPage(value)}
+            />
+          </Box>
+        </Paper>
+      )}
+
+      {tab === 1 && (
+        <Paper elevation={2} sx={{ width: "100%", overflowX: "auto" }}>
+          <Box minWidth={900}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <b>Cliente</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Teléfono</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Descripción</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Cantidad</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Modelo</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Precio</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Logo</b>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loadingOrders ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center">
+                      <CircularProgress />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell>{order.customer_name}</TableCell>
+                      <TableCell>{order.phone}</TableCell>
+                      <TableCell>{order.description}</TableCell>
+                      <TableCell>{order.quantity}</TableCell>
+                      <TableCell>{order.model}</TableCell>
+                      <TableCell>{order.price}</TableCell>
+                      <TableCell>
+                        {order.logo && (
+                          <img
+                            src={order.logo}
+                            alt="Logo"
+                            style={{ maxWidth: 80, borderRadius: 4 }}
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Box>
+          <Box display="flex" justifyContent="center" p={2}>
+            <Pagination
+              count={Math.ceil(totalOrders / limit)}
+              page={orderPage}
+              onChange={(_, value) => setOrderPage(value)}
+            />
+          </Box>
+        </Paper>
+      )}
     </Box>
   );
 }

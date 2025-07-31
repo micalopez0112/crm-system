@@ -14,6 +14,26 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 import gspread
 
+IMG_HEIGHT = 50
+IMG_WIDTH = 300
+COLUMNS = {
+    "FECHA": 1,
+    "ID_CLIENTE": 2,
+    "NOMBRE": 3,
+    "TELEFONO": 4,
+    "REDES": 5,
+    "CANTIDAD": 6,
+    "MODELO": 7,
+    "PRECIO_U": 8,
+    "PEDIDO": 9,
+    "PRODUCTO": 10,
+    "IMPORTE": 11,
+    "SENA": 12,
+    "SALDO": 13,
+    "ENTREGA": 14,
+}
+
+
 # Load environment variables from .env
 load_dotenv()
 
@@ -174,8 +194,6 @@ def add_customer(customer: Customer):
     except Exception as e:
         return {"error": str(e)}
 
-IMG_HEIGHT = 50
-IMG_WIDTH = 300
 
 @app.post("/order")
 def create_order(order: Order):
@@ -194,7 +212,7 @@ def create_order(order: Order):
 
     try:
         total = order.cantidad * order.precio
-        
+
         all_rows = sheet.get_all_values()
         last_order_row_index = 0
         for i, row in enumerate(all_rows):
@@ -203,19 +221,20 @@ def create_order(order: Order):
         row_index = last_order_row_index + 1
 
         nueva_fila = [
-            fecha,
-            id_cliente,
-            nombre,
-            telefono,
-            True if order.redes else False,
-            order.cantidad,
-            order.modelo,
-            order.precio,
-            order.pedido,
-            "",        # Imagen (columna I)
-            total,     # Total (J)
-            order.senia,
-            ""         # Restante (L)
+            fecha,                      # FECHA
+            id_cliente,                 # ID CLIENTE
+            nombre,                     # NOMBRE
+            telefono,                   # TELEFONO
+            bool(order.redes),          # REDES
+            order.cantidad,             # CANTIDAD
+            order.modelo,               # MODELO
+            order.precio,               # PRECIO U
+            order.pedido,               # PEDIDO
+            "",                         # PRODUCTO (se completa luego si hay imagen)
+            total,                      # IMPORTE
+            order.senia,                # SENA
+            "",                         # SALDO (se calcula luego)
+            ""                          # ENTREGA
         ]
 
         sheet.insert_row(nueva_fila, index=row_index)
@@ -226,13 +245,15 @@ def create_order(order: Order):
                 f"pulsera_{order.customer_id}_{datetime.now().timestamp()}.png"
             )
             formula_imagen = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
-            sheet.update_cell(row_index, 9, formula_imagen)  # Columna I
+            sheet.update_cell(row_index, COLUMNS["PRODUCTO"], formula_imagen)
 
-        formula_restante = f"=J{row_index}-K{row_index}"
-        sheet.update_cell(row_index, 12, formula_restante)  # Columna L
+        formula_restante = f"=K{row_index}-L{row_index}"
+        sheet.update_cell(row_index, COLUMNS["SALDO"], formula_restante)
 
         if float(order.senia) == total:
-            sheet.format(f"L{row_index}", {
+            col_senia_letter = chr(COLUMNS["SENA"] % 26 + ord('A'))
+            print(col_senia_letter)
+            sheet.format(f"{col_senia_letter}{row_index}", {
                 "backgroundColor": {
                     "red": 1.0,
                     "green": 0.8,
@@ -240,7 +261,9 @@ def create_order(order: Order):
                 }
             })
 
+
         return {"message": "Pedido guardado correctamente"}
+
 
     except Exception as e:
         print(e)

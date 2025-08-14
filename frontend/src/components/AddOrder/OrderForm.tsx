@@ -19,7 +19,7 @@ import {
 import axios from "../../../api/api";
 import CustomerAutocomplete from "../CustomerAutocomplete/CustomerAutocomplete";
 
-const modelos = ["Tyvek", "Techno", "PVC", "Otras"];
+const modelos = ["Tyvek", "Techno", "PVC", "Pulseras Tela", "Otras"];
 
 export default function OrderForm() {
   const [formData, setFormData] = useState({

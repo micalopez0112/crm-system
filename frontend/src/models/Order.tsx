@@ -7,4 +7,5 @@ export interface Order {
   pedido: string;
   senia: number;
   producto_base64: File | string | null;
+  color?: string;
 }

@@ -10,3 +10,4 @@ class Order(BaseModel):
     pedido: str
     senia: Optional[float]
     producto_base64: Optional[str] = None
+    color: Optional[str] = None

@@ -26,6 +26,7 @@ export default function OrderForm() {
     customer_id: null,
     redes: false,
     cantidad: null,
+    color: null,
     precio: null,
     modelo: "",
     pedido: "",
@@ -99,6 +100,7 @@ export default function OrderForm() {
         pedido: formData.pedido,
         senia: Number(formData.senia),
         producto_base64: formData.producto,
+        color: formData.color,
       });
 
       alert("✅ Pedido creado");
@@ -182,6 +184,17 @@ export default function OrderForm() {
                 ))}
               </Select>
             </FormControl>
+
+            <TextField
+              name="color"
+              label="Color"
+              value={formData.color}
+              onChange={handleChange}
+              multiline
+              fullWidth
+              size={isMobile ? "small" : "medium"}
+              sx={{ gridColumn: { sm: "span 1" } }}
+            />
 
             <TextField
               name="pedido"

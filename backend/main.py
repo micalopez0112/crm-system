@@ -24,13 +24,14 @@ COLUMNS = {
     "REDES": 5,
     "CANTIDAD": 6,
     "MODELO": 7,
-    "PRECIO_U": 8,
-    "PEDIDO": 9,
-    "PRODUCTO": 10,
-    "IMPORTE": 11,
-    "SENA": 12,
-    "SALDO": 13,
-    "ENTREGA": 14,
+    "COLOR": 8,
+    "PRECIO_U": 9,
+    "PEDIDO": 10,
+    "PRODUCTO": 11,
+    "IMPORTE": 12,
+    "SENA": 13,
+    "SALDO": 14,
+    "ENTREGA": 15,
 }
 
 
@@ -228,6 +229,7 @@ def create_order(order: Order):
             bool(order.redes),          # REDES
             order.cantidad,             # CANTIDAD
             order.modelo,               # MODELO
+            order.color,                # COLOR 
             order.precio,               # PRECIO U
             order.pedido,               # PEDIDO
             "",                         # PRODUCTO (se completa luego si hay imagen)
@@ -247,7 +249,7 @@ def create_order(order: Order):
             formula_imagen = f'=IMAGE("{image_url}"; 4; {IMG_HEIGHT}; {IMG_WIDTH})'
             sheet.update_cell(row_index, COLUMNS["PRODUCTO"], formula_imagen)
 
-        formula_restante = f"=K{row_index}-L{row_index}"
+        formula_restante = f"=L{row_index}-M{row_index}"
         sheet.update_cell(row_index, COLUMNS["SALDO"], formula_restante)
 
         if float(order.senia) == total:
@@ -260,11 +262,7 @@ def create_order(order: Order):
                     "blue": 0.6
                 }
             })
-
-
         return {"message": "Pedido guardado correctamente"}
-
-
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e))

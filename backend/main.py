@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from typing import Optional
 from dotenv import load_dotenv
 import os
@@ -38,21 +39,41 @@ COLUMNS = {
 # Load environment variables from .env
 load_dotenv()
 
-# Initialize FastAPI app
-app = FastAPI()
+# Initialize FastAPI apps
+app = FastAPI()  # Main app for static files
+api_app = FastAPI(title="CRM API")  # API app for all endpoints
 
 # Enable CORS
 origins = [
     os.getenv("ORIGIN"),
+    "http://localhost:8000",
+    "*",  # Allow all origins for testing
 ]
 
-app.add_middleware(
+# Add CORS middleware to the API app
+api_app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# API root endpoint
+@api_app.get("/")
+def root():
+    return {"message": "CRM System API"}
+
+# Mount the API under /api
+app.mount("/api", api_app)
+
+# Then mount static files at root
+static_files_path = os.path.abspath("../frontend/dist")
+print(f"Serving static files from: {static_files_path}")
+if not os.path.exists(static_files_path):
+    print(f"WARNING: Static files directory not found at {static_files_path}")
+
+app.mount("/", StaticFiles(directory=static_files_path, html=True), name="frontend")
 
 # Google Sheets setup
 def get_sheet(sheet_name="CLIENTES"):
@@ -77,7 +98,7 @@ def get_sheet(sheet_name="CLIENTES"):
 
 # ----------- Routes -----------
 
-@app.get("/")
+@api_app.get("/")
 def root():
     return {"message": "Google Sheets Customer Lookup API"}
 
@@ -94,7 +115,7 @@ sheets_fields = {
 }
 
 
-@app.get("/customers")
+@api_app.get("/customers")
 def list_customers(
     q: Optional[str] = Query(None),
     id: Optional[str] = Query(None)
@@ -124,7 +145,7 @@ def list_customers(
     ]
     return result
 
-@app.get("/customers-list")
+@api_app.get("/customers-list")
 def list_customers(
     q: Optional[str] = Query(None),
     id: Optional[str] = Query(None),
@@ -167,7 +188,7 @@ def list_customers(
 
 
 
-@app.post("/customer")
+@api_app.post("/customer")
 def add_customer(customer: Customer):
     sheet = get_sheet()
 
@@ -196,7 +217,7 @@ def add_customer(customer: Customer):
         return {"error": str(e)}
 
 
-@app.post("/order")
+@api_app.post("/order")
 def create_order(order: Order):
     sheet = get_sheet("PULSERAS")
     customer_sheet = get_sheet("CLIENTES")
@@ -296,7 +317,7 @@ def upload_image_to_drive(base64_str: str, filename: str) -> str:
 
     return f"https://drive.google.com/uc?export=view&id={file['id']}"
 
-@app.get("/orders")
+@api_app.get("/orders")
 def list_orders(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1)
